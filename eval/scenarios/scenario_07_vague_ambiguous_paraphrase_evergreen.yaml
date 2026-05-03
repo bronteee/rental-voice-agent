@@ -1,0 +1,19 @@
+scenario_id: vague_ambiguous_evergreen_02
+axis: vague_ambiguous
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "I might be able to squeeze it in."
+  4: "If my Bellevue job wraps on time, I can head over."
+  6: "Probably around 2:30, maybe closer to 3 if they hold me up."
+  8: "Price would be about $145."
+gold_outcome:
+  availability_bool: true
+  quoted_price_cents: 14500
+  eta_iso: "2026-05-02T14:30:00-07:00"
+  confidence: low
+  notes: "Cleaner might fit the job in if a prior job finishes on time; likely ETA is 2:30 but may be close to the 3 PM deadline."
+  cleaner_objections:
+    - "depends on prior job wrapping on time"
+gold_viability: unclear
+gold_end_reason: completed

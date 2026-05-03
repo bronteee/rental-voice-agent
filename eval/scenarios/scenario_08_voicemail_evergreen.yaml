@@ -1,0 +1,9 @@
+scenario_id: voicemail_evergreen_01
+axis: failure_mode
+failure_mode: voicemail_detected
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Hi, you've reached Evergreen Turnovers. We can't come to the phone right now. Please leave a message after the tone and we'll get back to you. Beep."
+gold_outcome: null
+gold_viability: unreachable
+gold_end_reason: voicemail_detected

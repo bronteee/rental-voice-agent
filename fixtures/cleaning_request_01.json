@@ -1,0 +1,13 @@
+{
+  "request_id": "cleaning_request_01",
+  "host_first_name": "Bronte",
+  "property_id": "capitol_hill_studio",
+  "deadline": "2026-05-02T15:00:00-07:00",
+  "max_budget_cents": 15000,
+  "cleaner": {
+    "cleaner_id": "evergreen_turnovers",
+    "name": "Evergreen Turnovers",
+    "phone": "+15550000001",
+    "priority": 1
+  }
+}

@@ -1,0 +1,19 @@
+scenario_id: past_deadline_evergreen_01
+axis: past_deadline
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Yeah, I have a minute."
+  4: "I can help today, but not by 3."
+  6: "It would be $125."
+  8: "I can swing by around 4:30 after my current job."
+gold_outcome:
+  availability_bool: true
+  quoted_price_cents: 12500
+  eta_iso: "2026-05-02T16:30:00-07:00"
+  confidence: high
+  notes: "Cleaner can do the job for $125 but cannot arrive until about 4:30 PM."
+  cleaner_objections:
+    - "not by 3"
+gold_viability: past_deadline
+gold_end_reason: completed

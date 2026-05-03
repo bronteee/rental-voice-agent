@@ -1,0 +1,17 @@
+scenario_id: clear_no_evergreen_01
+axis: clear_no
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Hi, yeah, I remember Alex."
+  4: "Sorry, I'm fully booked today and can't take another turnover."
+gold_outcome:
+  availability_bool: false
+  quoted_price_cents: null
+  eta_iso: null
+  confidence: high
+  notes: "Cleaner clearly declined because she is fully booked today."
+  cleaner_objections:
+    - "fully booked today"
+gold_viability: declined
+gold_end_reason: completed

@@ -1,0 +1,36 @@
+[project]
+name = "rental-voice-agent"
+version = "0.1.0"
+description = "Eval-first proof of concept for an outbound voice agent coordinating backup cleaners after short-notice turnovers."
+readme = "README.md"
+authors = [
+    { name = "bronte-audere", email = "bronte@auderenow.org" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "livekit-agents>=1.5.7",
+    "livekit-plugins-openai>=1.5.7",
+    "livekit-plugins-silero>=1.5.7",
+    "pydantic>=2.13.3",
+    "pytest>=9.0.3",
+    "python-dotenv>=1.2.2",
+    "pyyaml>=6.0.3",
+    "scikit-learn>=1.8.0",
+]
+
+[project.scripts]
+rental-voice-agent = "rental_voice_agent.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+    "ty>=0.0.34",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

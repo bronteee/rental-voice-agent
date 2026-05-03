@@ -1,0 +1,11 @@
+{
+  "property_id": "capitol_hill_studio",
+  "name": "Capitol Hill Studio",
+  "summary_short": "a one-bedroom studio",
+  "bedrooms": 1,
+  "bathrooms": 1,
+  "square_footage": 520,
+  "floor_type": "hardwood",
+  "parking_notes": "Street parking is usually available within one block.",
+  "special_instructions": "Standard turnover: linens, bathroom, kitchen, floors, and trash."
+}

@@ -1,0 +1,11 @@
+scenario_id: cleaner_hostile_evergreen_01
+axis: failure_mode
+failure_mode: cleaner_hostile
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Wait, who is this exactly? How did you get my number?"
+  4: "I don't trust automated calls. This sounds like a scam to me."
+  6: "Stop calling me. I'm not interested in whatever you're selling. Goodbye."
+gold_outcome: null
+gold_viability: unclear
+gold_end_reason: cleaner_hostile

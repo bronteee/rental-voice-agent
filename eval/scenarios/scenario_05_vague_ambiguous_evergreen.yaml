@@ -1,0 +1,20 @@
+scenario_id: vague_ambiguous_evergreen_01
+axis: vague_ambiguous
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Maybe, I'm between jobs right now."
+  4: "If traffic isn't terrible I could probably make it around 2:45, but I can't promise."
+  6: "It'd probably be $135."
+  8: "Yeah, probably 2:45, but if traffic backs up it could slip past 3."
+gold_outcome:
+  availability_bool: true
+  quoted_price_cents: 13500
+  eta_iso: "2026-05-02T14:45:00-07:00"
+  confidence: low
+  notes: "Cleaner gave a likely 2:45 arrival and $135 price, but conditioned availability on traffic and said it could slip past 3."
+  cleaner_objections:
+    - "depends on traffic"
+    - "could slip past 3"
+gold_viability: unclear
+gold_end_reason: completed

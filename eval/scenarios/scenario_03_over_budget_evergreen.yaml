@@ -1,0 +1,19 @@
+scenario_id: over_budget_evergreen_01
+axis: over_budget
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Hey, what's going on?"
+  4: "I can do it before 3, yeah."
+  6: "For same-day short notice it'd be $200."
+  8: "I can get there around 2:15."
+gold_outcome:
+  availability_bool: true
+  quoted_price_cents: 20000
+  eta_iso: "2026-05-02T14:15:00-07:00"
+  confidence: high
+  notes: "Cleaner is available before the deadline, but quoted a $200 short-notice price."
+  cleaner_objections:
+    - "short notice"
+gold_viability: over_budget
+gold_end_reason: completed

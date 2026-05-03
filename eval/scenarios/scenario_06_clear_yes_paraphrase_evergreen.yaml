@@ -1,0 +1,18 @@
+scenario_id: clear_yes_evergreen_02
+axis: clear_yes
+failure_mode: null
+request_fixture: cleaning_request_01.json
+cleaner_turns:
+  2: "Sure, tell me what Alex needs."
+  4: "Yes, I can take that one today."
+  6: "I should be at the studio by about 2."
+  8: "Call it $140 all in."
+gold_outcome:
+  availability_bool: true
+  quoted_price_cents: 14000
+  eta_iso: "2026-05-02T14:00:00-07:00"
+  confidence: medium
+  notes: "Cleaner accepted the job, quoted $140, and gave an approximate 2 PM arrival."
+  cleaner_objections: []
+gold_viability: viable
+gold_end_reason: completed
