@@ -94,11 +94,12 @@ def test_lookup_property_details_returns_value_and_graceful_miss() -> None:
     )
 
     assert (
-        asyncio.run(tools.lookup_property_details("capitol_hill_studio", "floor_type"))
+        asyncio.run(tools.lookup_property_details("floor_type"))
         == "hardwood"
     )
+    state.request.property_id = "missing_property"
     assert "don't have" in asyncio.run(
-        tools.lookup_property_details("missing_property", "floor_type")
+        tools.lookup_property_details("floor_type")
     )
 
 
@@ -119,6 +120,28 @@ def test_end_call_returns_stop_signal_and_sets_event() -> None:
         asyncio.run(
             tools.escalate_to_host("Budget exception.", "Cleaner asked for $225.")
         )
+
+
+def test_terminal_tool_waits_for_prior_speech_before_setting_event() -> None:
+    state = _state()
+    tools = create_call_tools(
+        state,
+        property_fixtures_dir=ROOT / "fixtures" / "properties",
+    )
+    waited = False
+
+    async def wait_for_playout() -> None:
+        nonlocal waited
+        assert not tools.end_event.is_set()
+        assert state.end_reason is None
+        waited = True
+
+    result = asyncio.run(tools.end_call_after_playout("completed", wait_for_playout))
+
+    assert waited
+    assert "Do not generate" in result
+    assert state.end_reason == "completed"
+    assert tools.end_event.is_set()
 
 
 def test_escalate_to_host_sets_end_event() -> None:

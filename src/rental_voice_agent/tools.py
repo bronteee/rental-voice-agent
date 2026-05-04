@@ -5,9 +5,9 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Awaitable, Callable, Literal
 
-from livekit.agents import function_tool
+from livekit.agents import RunContext, function_tool
 
 from rental_voice_agent.state import CallOutcome, CallState, ToolCallEntry
 
@@ -107,11 +107,8 @@ class CallTools:
             self._append_tool_call("record_call_outcome", args, f"ERROR: {exc}")
             raise
 
-    async def lookup_property_details(
-        self,
-        property_id: str,
-        field: PropertyField,
-    ) -> str:
+    async def lookup_property_details(self, field: PropertyField) -> str:
+        property_id = self.state.request.property_id
         path = self.property_fixtures_dir / f"{property_id}.json"
         if not path.exists():
             result = PROPERTY_MISS
@@ -144,6 +141,14 @@ class CallTools:
         self.end_event.set()
         return result
 
+    async def end_call_after_playout(
+        self,
+        reason: LLMEndReason,
+        wait_for_playout: Callable[[], Awaitable[None]],
+    ) -> str:
+        await wait_for_playout()
+        return await self.end_call(reason)
+
     async def escalate_to_host(
         self,
         reason: str,
@@ -166,6 +171,15 @@ class CallTools:
         self.end_event.set()
         return result
 
+    async def escalate_to_host_after_playout(
+        self,
+        reason: str,
+        cleaner_response_summary: str,
+        wait_for_playout: Callable[[], Awaitable[None]],
+    ) -> str:
+        await wait_for_playout()
+        return await self.escalate_to_host(reason, cleaner_response_summary)
+
     def as_livekit_tools(self) -> list[object]:
         @function_tool
         async def record_call_outcome(
@@ -187,21 +201,23 @@ class CallTools:
             )
 
         @function_tool
-        async def lookup_property_details(
-            property_id: str, field: PropertyField
-        ) -> str:
-            """Look up one property detail only when the cleaner asks for it."""
-            return await self.lookup_property_details(property_id, field)
+        async def lookup_property_details(field: PropertyField) -> str:
+            """Look up one detail for the current cleaning request's property."""
+            return await self.lookup_property_details(field)
 
         @function_tool
-        async def end_call(reason: LLMEndReason) -> str:
+        async def end_call(context: RunContext, reason: LLMEndReason) -> str:
             """End the call with the best matching terminal reason."""
-            return await self.end_call(reason)
+            return await self.end_call_after_playout(reason, context.wait_for_playout)
 
         @function_tool
-        async def escalate_to_host(reason: str, cleaner_response_summary: str) -> str:
+        async def escalate_to_host(
+            context: RunContext, reason: str, cleaner_response_summary: str
+        ) -> str:
             """Escalate when the cleaner asks for a host-only decision."""
-            return await self.escalate_to_host(reason, cleaner_response_summary)
+            return await self.escalate_to_host_after_playout(
+                reason, cleaner_response_summary, context.wait_for_playout
+            )
 
         return [
             record_call_outcome,

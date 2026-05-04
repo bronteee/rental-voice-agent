@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from livekit.agents.llm import RealtimeError
+from tqdm import tqdm
 
 from eval.leaderboard import (
     append_leaderboard,
@@ -63,15 +64,31 @@ async def _main() -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
 
     scenario_scores: list[tuple[Scenario, ScenarioScore]] = []
-    for index, scenario in enumerate(scenarios):
-        if index > 0 and EVAL_SCENARIO_SPACING_S > 0:
-            await asyncio.sleep(EVAL_SCENARIO_SPACING_S)
-        state = await _run_scenario_with_retry(scenario)
-        viability, reason = classify(state)
-        state.viability = viability
-        state.classification_reason = reason
-        state.write_json(snapshot_dir / f"{scenario.scenario_id}.json")
-        scenario_scores.append((scenario, score_run(state, scenario)))
+    passed_so_far = 0
+    with tqdm(
+        scenarios,
+        desc='Eval',
+        unit='scenario',
+        dynamic_ncols=True,
+    ) as bar:
+        for index, scenario in enumerate(bar):
+            if index > 0 and EVAL_SCENARIO_SPACING_S > 0:
+                await asyncio.sleep(EVAL_SCENARIO_SPACING_S)
+            bar.set_description(scenario.scenario_id, refresh=False)
+            state = await _run_scenario_with_retry(scenario)
+            viability, reason = classify(state)
+            state.viability = viability
+            state.classification_reason = reason
+            state.write_json(snapshot_dir / f"{scenario.scenario_id}.json")
+            score = score_run(state, scenario)
+            scenario_scores.append((scenario, score))
+            if score.passed:
+                passed_so_far += 1
+            bar.set_postfix(
+                passed=passed_so_far,
+                failed=len(scenario_scores) - passed_so_far,
+                refresh=True,
+            )
 
     scores = [score for _, score in scenario_scores]
     write_config(run_dir, git_sha=_git_sha())
@@ -99,19 +116,17 @@ async def _run_scenario_with_retry(scenario: Scenario):
             if not _looks_like_realtime_infra_failure(state):
                 return state
             last_state = state
-            print(
+            tqdm.write(
                 f"[eval] {scenario.scenario_id} attempt {attempt}/"
                 f"{EVAL_MAX_ATTEMPTS} produced no tool calls "
                 f"(end_reason={state.end_reason}); treating as transient "
                 "Realtime infra failure",
-                flush=True,
             )
         except RealtimeError as exc:
             last_exc = exc
-            print(
+            tqdm.write(
                 f"[eval] {scenario.scenario_id} attempt {attempt}/"
                 f"{EVAL_MAX_ATTEMPTS} hit RealtimeError: {exc!r}",
-                flush=True,
             )
         if attempt < EVAL_MAX_ATTEMPTS:
             await asyncio.sleep(_retry_backoff_seconds(attempt))
