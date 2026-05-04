@@ -2,6 +2,9 @@
 
 Eval-first proof of concept for an outbound voice agent that calls a backup cleaner after a same-day short-term-rental cleaning cancellation.
 
+## Demo link
+https://www.loom.com/share/21fb8f4e44644821885a270b9de803e0
+
 ## Local Setup
 
 ```bash
