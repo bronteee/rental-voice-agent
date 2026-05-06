@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rental outbound voice agent</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --mute: #5f6368;
+    --line: #d0d0d0;
+    --lav: #e8e7fb;
+    --lav-line: #b9b6e8;
+    --gray: #efefef;
+    --link: #1a73a7;
+    --bg: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #f4f4f4;
+    font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 80px;
+    gap: 24px;
+  }
+  .slide {
+    background: var(--bg);
+    width: min(1280px, 100%);
+    aspect-ratio: 16 / 9;
+    padding: 56px 80px 64px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .slide > h1 {
+    font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 48px);
+    line-height: 1.1;
+    margin: 0 0 16px;
+    letter-spacing: -0.5px;
+    flex: 0 0 auto;
+  }
+  .slide .content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    min-height: 0;
+  }
+  .slide .content.top { justify-content: flex-start; }
+  .slide .content.fill { justify-content: stretch; }
+  .slide .content.fill > * { flex: 1 1 auto; min-height: 0; }
+  .slide h2 {
+    font-weight: 400;
+    font-size: clamp(18px, 1.8vw, 24px);
+    margin: 0 0 10px;
+    letter-spacing: -0.2px;
+  }
+  .slide .num {
+    position: absolute; bottom: 16px; right: 22px;
+    color: #aaa; font-size: 12px; letter-spacing: .5px;
+  }
+
+  /* Title slide */
+  .slide.title { justify-content: center; padding-left: 120px; }
+  .slide.title h1 {
+    font-size: clamp(40px, 5.2vw, 72px);
+    margin-bottom: 18px;
+  }
+  .slide.title .sub {
+    color: var(--mute);
+    font-size: clamp(18px, 1.6vw, 24px);
+  }
+
+  p, li { font-size: clamp(17px, 1.5vw, 23px); line-height: 1.5; color: #2a2a2a; margin: 0; }
+  ul { padding-left: 22px; margin: 0; }
+  li { margin-bottom: 8px; }
+  li:last-child { margin-bottom: 0; }
+  .mute { color: var(--mute); }
+  .quote {
+    color: var(--mute);
+    font-size: clamp(18px, 1.55vw, 23px);
+    line-height: 1.5;
+  }
+
+  /* Mermaid */
+  .mermaid-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    width: 100%;
+  }
+  .mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mermaid svg {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  /* tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: clamp(15px, 1.25vw, 19px);
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #fafafa; font-weight: 600; }
+  td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pass { color: #137333; font-weight: 600; }
+  .warn { color: #b06000; font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+
+  pre.code {
+    background: #f7f7f7;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 0;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: clamp(12px, 1vw, 15px);
+    line-height: 1.45;
+    color: #2a2a2a;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre.code .k { color: #1a73a7; }
+  pre.code .s { color: #137333; }
+  pre.code .n { color: #b06000; }
+
+  a { color: var(--link); text-decoration: underline; word-break: break-all; }
+
+  .demo-cta {
+    background: var(--lav);
+    border: 1px solid var(--lav-line);
+    border-radius: 10px;
+    padding: 22px 28px;
+  }
+  .demo-cta a {
+    font-size: clamp(17px, 1.5vw, 22px);
+    font-weight: 600;
+  }
+
+  .controls {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.92);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--mute);
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    user-select: none;
+    z-index: 10;
+  }
+  .controls kbd {
+    background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px;
+    padding: 1px 5px; font-family: inherit; font-size: 11px;
+  }
+
+  body.present .deck { padding: 0; gap: 0; }
+  body.present .slide {
+    width: 100vw; height: 100vh; aspect-ratio: auto;
+    box-shadow: none;
+    display: none;
+    padding: clamp(40px, 5vh, 70px) clamp(48px, 6vw, 110px) clamp(48px, 6vh, 80px);
+  }
+  body.present .slide.active { display: flex; }
+
+  @media (max-width: 760px) {
+    .slide { padding: 36px 28px 48px; }
+    .two { grid-template-columns: 1fr; }
+  }
+  @media print {
+    body { background: #fff; }
+    .controls { display: none; }
+    .deck { padding: 0; gap: 0; }
+    .slide { box-shadow: none; page-break-after: always; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 Title -->
+  <section class="slide title">
+    <h1>Rental outbound voice agent</h1>
+    <div class="sub">POC: calling cleaning services for urgent scheduling needs</div>
+    <div class="num">1 / 12</div>
+  </section>
+
+  <!-- 2 Problem -->
+  <section class="slide">
+    <h1>The problem</h1>
+    <div class="content">
+      <p class="quote">"As a short-term rental host facing a same-day cleaning cancellation, I want to delegate the calling-around work to an AI voice agent, so I can recover the turnover before guest check-in without dropping what I'm doing to coordinate backup cleaners myself."</p>
+      <p><strong>Scenario:</strong> short-term rental host has a <em>last-minute cleaning cancellation</em> and needs a replacement before next check-in — ASAP.</p>
+      <p><strong>Why a voice agent:</strong> urgent and stressful, hosts are often hands-off, zero onboarding cost, immediate outcome after the call.</p>
+    </div>
+    <div class="num">2 / 12</div>
+  </section>
+
+  <!-- 3 End-to-end flow -->
+  <section class="slide">
+    <h1>End-to-end flow</h1>
+    <div class="content fill">
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart LR
+    Problem["Cleaner cancels<br/>check-in 4 PM"] --> Request["Unit B<br/>by 3 PM, max $150"]
+    Request --> Agent["AI calls<br/>cleaner"]
+    Agent <--> Cleaner["Cleaner says<br/>2:30 PM for $120"]
+    Agent --> Extract["Extract<br/>yes / 2:30 PM / $120"]
+    Extract --> Outcome["Host outcome<br/>viable"]
+        </pre>
+      </div>
+    </div>
+    <div class="num">3 / 12</div>
+  </section>
+
+  <!-- 4 Architecture -->
+  <section class="slide">
+    <h1>Architecture</h1>
+    <div class="content fill">
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart LR
+    Host["Host request<br/>(unit, budget, deadline)"] --> Twilio["Twilio<br/>outbound PSTN"]
+    Twilio <--> LK["LiveKit Agents<br/>+ OpenAI Realtime"]
+    LK --> State["Call state JSON"]
+    State --> Classifier["Viability<br/>classifier"]
+    Classifier --> Outcome["Host outcome"]
+        </pre>
+      </div>
+      <p class="mute" style="text-align:center;"><strong>Determinism boundary:</strong> LLM extracts facts; Business logic owns lifecycle, state, and viability classification.</p>
+    </div>
+    <div class="num">4 / 12</div>
+  </section>
+
+  <!-- 5 Agent call flow -->
+  <section class="slide">
+    <h1>Agent call flow</h1>
+    <div class="content fill">
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+    participant A as AI agent
+    participant C as Cleaner
+    participant T as record_call_outcome
+    participant S as State
+    A->>C: Disclose AI + explain job
+    A->>C: Ask availability, price, ETA
+    C->>A: Natural-language answer
+    A->>C: Clarify missing or ambiguous fields
+    A->>T: availability, quote, ETA, caveats
+    T->>S: Persist structured outcome
+        </pre>
+      </div>
+    </div>
+    <div class="num">5 / 12</div>
+  </section>
+
+  <!-- 6 Eval-first methodology -->
+  <section class="slide">
+    <h1>Eval-first</h1>
+    <div class="content">
+      <p class="mute">What we measure: <strong>task success</strong>, <strong>conversation quality</strong>, (in prod) <strong>latency &amp; stability</strong>.</p>
+      <table>
+        <thead>
+          <tr><th style="width:50%">Offline gold-set</th><th>Post-call LLM-as-judge</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <ul>
+                <li>Outcome buckets &amp; failure modes: happy path, over budget, vague, voicemail, hostile</li>
+                <li>Metrics: viability classification, structured extraction, end-reason match, disclosure rendering</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Disclosure playout</li>
+                <li>Required-field collection</li>
+                <li>Naturalness &amp; no overcommitment</li>
+                <li>Ambiguity &amp; caveats handling</li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="num">6 / 12</div>
+  </section>
+
+  <!-- 7 Eval results -->
+  <section class="slide">
+    <h1>Eval results</h1>
+    <div class="content">
+      <div class="two">
+        <div>
+          <h2>Offline gold-set <span class="mute" style="font-size:.7em;">(9 scenarios)</span></h2>
+          <table>
+            <tbody>
+              <tr><td>Overall</td><td class="n pass">9 / 9</td></tr>
+              <tr><td>Viability classification</td><td class="n pass">9 / 9</td></tr>
+              <tr><td>Structured extraction</td><td class="n pass">9 / 9</td></tr>
+              <tr><td>AI disclosure</td><td class="n pass">9 / 9</td></tr>
+              <tr><td>End-reason match</td><td class="n pass">9 / 9</td></tr>
+            </tbody>
+          </table>
+          <p class="mute" style="font-size:13px; margin-top:10px;">clear yes ×2, clear no, over budget, past deadline, vague ×2, voicemail, hostile cleaner</p>
+        </div>
+        <div>
+          <h2>Live-call judge <span class="mute" style="font-size:.7em;">(5 calls, gpt-4o-mini)</span></h2>
+          <table>
+            <tbody>
+              <tr><td>Overall</td><td class="n warn">4 / 5</td></tr>
+              <tr><td>AI disclosure</td><td class="n pass">5 / 5</td></tr>
+              <tr><td>Naturalness</td><td class="n pass">5 / 5</td></tr>
+              <tr><td>No overcommitment</td><td class="n pass">5 / 5</td></tr>
+              <tr><td>Cleaner-facing close</td><td class="n pass">5 / 5</td></tr>
+              <tr><td>Required-field collection</td><td class="n warn">3 / 5</td></tr>
+              <tr><td>Ambiguity &amp; caveats</td><td class="n warn">1 / 5</td></tr>
+            </tbody>
+          </table>
+          <p class="mute" style="font-size:13px; margin-top:10px;">Honest gap: agent collects core fields but doesn't probe conditional caveats (traffic, "if nothing else comes up").</p>
+        </div>
+      </div>
+    </div>
+    <div class="num">7 / 12</div>
+  </section>
+
+  <!-- 8 Per-call observability -->
+  <section class="slide">
+    <h1>Per-call observability</h1>
+    <div class="content">
+      <div class="two">
+        <div>
+          <h2>Agent response latency <span class="mute" style="font-size:.7em;">(12 calls, 49 turns)</span></h2>
+          <table>
+            <tbody>
+              <tr><td>Median</td><td class="n pass">470 ms</td></tr>
+              <tr><td>Mean</td><td class="n">896 ms</td></tr>
+              <tr><td>p95</td><td class="n warn">2,310 ms</td></tr>
+              <tr><td>Min / max</td><td class="n">272 / 3,329 ms</td></tr>
+            </tbody>
+          </table>
+          <p class="mute" style="font-size:14px; margin-top:10px;">Measured from when the cleaner stops speaking to when the agent starts speaking.</p>
+          <p class="mute" style="font-size:13px; margin-top:6px; font-style: italic;">Excludes 22 turns from earlier snapshots (schema v1) where overlapping greetings caused the metric to count agent speaking time as latency.</p>
+        </div>
+        <div>
+          <h2>Structured outcome <span class="mute" style="font-size:.7em;">(per call, persisted)</span></h2>
+<pre class="code">{
+  <span class="k">"availability_bool"</span>: <span class="k">true</span>,
+  <span class="k">"confidence"</span>: <span class="s">"high"</span>,
+  <span class="k">"eta_iso"</span>: <span class="s">"2026-05-02T14:00-07:00"</span>,
+  <span class="k">"quoted_price_cents"</span>: <span class="n">12000</span>,
+  <span class="k">"cleaner_objections"</span>: [],
+  <span class="k">"notes"</span>: <span class="s">"2 hours at $60/hr."</span>
+}
+<span class="mute">→ viability: <span class="s">"viable"</span></span>
+<span class="mute">  reason: available, in budget, before deadline</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="num">8 / 12</div>
+  </section>
+
+  <!-- 9 Core decisions -->
+  <section class="slide">
+    <h1>Core decisions</h1>
+    <div class="content">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Choice</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>LLM, TTS, STT</td>
+            <td>OpenAI Realtime <code>gpt-realtime</code></td>
+            <td>One low-latency streaming stack for speech-in, reasoning, speech-out.</td>
+          </tr>
+          <tr>
+            <td>Telephony</td>
+            <td>Twilio Programmable Voice</td>
+            <td>Easy setup, fast path to outbound calls.</td>
+          </tr>
+          <tr>
+            <td>Orchestration</td>
+            <td>LiveKit SIP &amp; Agents</td>
+            <td>Avoids custom audio bridging; provides VAD, turn detection, Realtime integration, tool calling.</td>
+          </tr>
+          <tr>
+            <td>State</td>
+            <td>Dataclasses + JSON snapshots</td>
+            <td>Easy to inspect for POC.</td>
+          </tr>
+          <tr>
+            <td>Architecture boundary</td>
+            <td>LLM extracts, Python decides</td>
+            <td>Viability classification is deterministic; keeps agent behavior testable and the gold-set meaningful.</td>
+          </tr>
+          <tr>
+            <td>Evaluation</td>
+            <td>Eval runner + LLM judge</td>
+            <td>Deterministic gold-set for regressions; LLM-as-judge for interaction quality.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="num">9 / 12</div>
+  </section>
+
+  <!-- 9 Learnings & future work -->
+  <section class="slide">
+    <h1>Learnings &amp; future work</h1>
+    <div class="content">
+      <div class="two">
+        <div>
+          <h2>Learnings</h2>
+          <ul>
+            <li>OpenAI Realtime: rate limits and connection timeouts surface fast under load</li>
+            <li>VAD + barge-in: interruptions cut off mid-token; turn detection still needs tuning</li>
+            <li>Eval limitation: gold-set is transcript replay — doesn't exercise STT or audio dynamics</li>
+          </ul>
+        </div>
+        <div>
+          <h2>Future work</h2>
+          <ul>
+            <li>Modular TTS/STT for additional models &amp; scale</li>
+            <li>Gold-set with agent personas &amp; real back-and-forth, not transcript replay</li>
+            <li>Observability: dashboards for routing quality, latency, cost</li>
+            <li>Parallelize calls to multiple cleaners</li>
+            <li>State storage in a real DB; outcome notifications</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="num">10 / 12</div>
+  </section>
+
+  <!-- 10 AI assistant usage -->
+  <section class="slide">
+    <h1>AI assistant usage</h1>
+    <div class="content">
+      <ul>
+        <li>Initial ideation back-and-forth with GPT: narrowed to a clear set of assignment criteria</li>
+        <li>Design and spec writing with Claude Code</li>
+        <li>Implementation with Claude Code &amp; Codex: eval harness first, then linting, automated tests, eval runs as gates</li>
+        <li>Code reviews and bug fixes with Codex</li>
+        <li>Targeted deep-dives with Claude Code on specific subsystems</li>
+      </ul>
+    </div>
+    <div class="num">11 / 12</div>
+  </section>
+
+  <!-- 11 Demo & References -->
+  <section class="slide">
+    <h1>Demo &amp; references</h1>
+    <div class="content">
+      <div class="demo-cta">
+        <div class="mute" style="font-size:13px; margin-bottom:6px;">Recorded demo</div>
+        <a href="https://www.loom.com/share/21fb8f4e44644821885a270b9de803e0" target="_blank" rel="noopener">loom.com/share/21fb8f4e44644821885a270b9de803e0</a>
+      </div>
+      <ul>
+        <li><a href="https://github.com/bronteee/rental-voice-agent" target="_blank" rel="noopener">github.com/bronteee/rental-voice-agent</a></li>
+        <li><a href="https://github.com/bronteee/rental-voice-agent/blob/main/DESIGN.md" target="_blank" rel="noopener">DESIGN.md</a></li>
+        <li><a href="https://docs.livekit.io/agents/logic/" target="_blank" rel="noopener">LiveKit Agents — logic</a></li>
+        <li><a href="https://docs.livekit.io/agents/models/realtime/plugins/openai/" target="_blank" rel="noopener">LiveKit Agents — OpenAI Realtime plugin</a></li>
+      </ul>
+    </div>
+    <div class="num">12 / 12</div>
+  </section>
+
+</div>
+
+<div class="controls" id="controls">
+  <kbd>P</kbd> present · <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> exit
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: '"Open Sans", -apple-system, "Helvetica Neue", Arial, sans-serif',
+      fontSize: '15px',
+      primaryColor: '#e8e7fb',
+      primaryBorderColor: '#b9b6e8',
+      primaryTextColor: '#2a2a2a',
+      lineColor: '#5f6368',
+      secondaryColor: '#e8e7fb',
+      tertiaryColor: '#ffffff',
+      noteBkgColor: '#fff8d6',
+      noteBorderColor: '#d8c97a',
+      actorBkg: '#e8e7fb',
+      actorBorder: '#b9b6e8',
+      actorTextColor: '#2a2a2a',
+      signalColor: '#5f6368',
+      signalTextColor: '#2a2a2a',
+      labelBoxBkgColor: '#e8e7fb',
+      labelBoxBorderColor: '#b9b6e8',
+    },
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 12 },
+    sequence: { actorMargin: 60, boxMargin: 8, messageMargin: 32, mirrorActors: false },
+  });
+</script>
+
+<script>
+(function() {
+  const body = document.body;
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let idx = 0;
+
+  function setActive(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    if (body.classList.contains('present')) {
+      slides.forEach((s, j) => s.classList.toggle('active', j === idx));
+      slides[idx].scrollIntoView({ block: 'start' });
+    } else {
+      slides[idx].scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }
+
+  function enter() {
+    body.classList.add('present');
+    setActive(idx);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }
+  function exit() {
+    body.classList.remove('present');
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'p' || e.key === 'P') {
+      body.classList.contains('present') ? exit() : enter();
+    } else if (e.key === 'Escape') {
+      exit();
+    } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (body.classList.contains('present')) { e.preventDefault(); setActive(idx + 1); }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (body.classList.contains('present')) { e.preventDefault(); setActive(idx - 1); }
+    } else if (e.key === 'Home') {
+      if (body.classList.contains('present')) setActive(0);
+    } else if (e.key === 'End') {
+      if (body.classList.contains('present')) setActive(slides.length - 1);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!body.classList.contains('present')) return;
+    if (e.target.closest('a')) return;
+    setActive(idx + 1);
+  });
+})();
+</script>
+</body>
+</html>

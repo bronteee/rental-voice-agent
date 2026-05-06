@@ -5,8 +5,11 @@ Eval-first proof of concept for an outbound voice agent that calls a backup clea
 ## Demo link
 https://www.loom.com/share/21fb8f4e44644821885a270b9de803e0
 
+## Design
+[Design doc](DESIGN.md)
+
 ## Presentation
-https://docs.google.com/presentation/d/1nc0vSOpG62AOVYvIgVFTyTKGQ2fApFzSbYcN4ng2RQQ/edit?usp=sharing
+[Presentation slides](PRESENTATION.html)
 
 ## Local Setup
 
