@@ -10,12 +10,20 @@ As a short-term rental host facing a same-day cleaning cancellation, I want to d
 
 ```mermaid
 flowchart LR
-    Problem[Cleaner cancels<br/>guest check-in 4 PM] --> Request[Request<br/>Unit B, by 3 PM<br/>max $150, supplies onsite]
-    Request --> Agent[AI voice agent]
-    Agent <--> Cleaner[Cleaner<br/>"I can arrive 2:30<br/>for $120 if parking is easy"]
-    Agent --> Extract[Extract<br/>available: yes<br/>ETA: 2:30 PM<br/>price: $120<br/>caveat: parking]
-    Extract --> Outcome[Outcome to host<br/>viable: on-time + in-budget]
+    Problem["`Cleaner cancels
+    check-in 4 PM`"] --> Request["`Unit B
+    by 3 PM, max $150`"]
+    Request --> Agent["`AI calls
+    cleaner`"]
+    Agent <--> Cleaner["`Cleaner says
+    2:30 PM for $120`"]
+    Agent --> Extract["`Extract
+    yes / 2:30 PM / $120`"]
+    Extract --> Outcome["`Host outcome
+    viable`"]
 ```
+
+Example caveat captured in state: parking may affect arrival.
 
 ```mermaid
 flowchart LR
@@ -74,7 +82,7 @@ The agent must identify itself as AI, collect only the fields needed for the hos
 ```mermaid
 flowchart LR
     Scenarios[Scenario YAML: gold outcomes] --> Runner[Offline eval runner]
-    Runner --> Agent[Same agent prompt<br/>same tools]
+    Runner --> Agent[Same agent prompt and tools]
     Agent --> Snapshot[State snapshot]
     Snapshot --> Score[Deterministic scorer]
     Score --> Board[Leaderboard + transcripts]
